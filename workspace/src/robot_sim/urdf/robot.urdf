@@ -119,7 +119,7 @@
   <plugin filename="libgz_ros2_control-system.so"
           name="gz_ros2_control::GazeboSimROS2ControlPlugin">
 
-    <parameters>$(find robot_sim)/config/controllers.yaml</parameters>
+    <parameters>/home/devuser/workspace/install/robot_sim/share/robot_sim/config/controllers.yaml</parameters>
 
   </plugin>
 
