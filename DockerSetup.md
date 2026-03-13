@@ -182,6 +182,8 @@ git clone https://github.com/purvanyaTyagi/Simulation-Development-Recruitment-Ha
 
 #### 6.3 Build and Start the Container
 
+> ⚠️ **Windows Users — Important:** Make sure `docker compose up` is run from within your **WSL Ubuntu 22.04 environment**, not from native Windows PowerShell or Command Prompt. Running it outside of WSL may cause the container to fail or behave unexpectedly. Once the container is running, you can attach to it from any terminal (WSL or otherwise) using `docker exec`.
+
 From the repository root directory, build and start the Docker container:
 
 ```bash
@@ -234,6 +236,8 @@ This command:
 - `bash`: Opens a bash shell inside the container
 
 You'll now be inside the Docker container with access to the full ROS 2 environment.
+
+> **Note:** Once the container is running (started via WSL), you can attach to it from **any terminal** — including native Windows PowerShell or Command Prompt — using the `docker exec -it ros2-humble-ignition bash` command above.
 
 #### 7.3 Launch the Simulation
 
