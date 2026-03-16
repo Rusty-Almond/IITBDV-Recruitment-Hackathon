@@ -162,6 +162,20 @@ class Solution(Bot):
             self.heading + (velocity / WHEELBASE) * np.tan(steering) * DT
         )
 
+        #modifications using sensor data
+        measurements =get_measurements(self.pos, self.heading)
+
+        if(len(measurements) > 2) :
+            #average cone direction
+            avg = np.mean(measurements, axis=0)
+            #change heading
+            new_angle = np.arctan2(avg[1], avg[0])
+            #applying correction
+            self.heading = angle_wrap(self.heading + 0.01 *new_angle)
+
+        center_offset = np.mean(measurements[:,1]) # only y in local frame
+        self.pos[1]-= 0.01*center_offset
+
 
 # ── Problem 2 – Localization ───────────────────────────────────────────────────
 def make_problem2():

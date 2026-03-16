@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from scipy.spatial import distance
+from scipy.optimize import linear_sum_assignment
 import pandas as pd
 
 # ── Load Track from CSV ───────────────────────────────────────────────────────
@@ -171,15 +172,27 @@ class Solution(Bot):
         """
         if len(measurements) == 0 or len(current_map) == 0:
             self._global_meas = np.zeros((0, 2))
-            self._assoc       = np.array([], dtype=int)
+            self._assoc       = np.zeros(0, dtype=int)
             return self._assoc
 
         gm = local_to_global(measurements, self.pos, self.heading)
         self._global_meas = gm
 
-        D           = distance.cdist(gm, current_map)
-        self._assoc = np.argmin(D, axis=1)
+        D= distance.cdist(gm, current_map)
+        rows,cols = linear_sum_assignment(D)
+
+        assoc= -np.ones(len(gm),dtype=int)
+        for r,c in zip(rows,cols):
+            if D[r,c] < 12.0:
+                assoc[r] = c
+
+        print("Matches this frame:", np.sum(assoc >= 0))
+        self._assoc=assoc
         return self._assoc
+
+total_measurements = 0
+total_correct =0
+
 
 # ── Problem 1 – Data Association ──────────────────────────────────────────────
 def make_problem1():
@@ -194,6 +207,9 @@ def make_problem1():
                  fontsize=13, fontweight="bold")
 
     def update(frame):
+        global total_measurements, total_correct
+
+
         ax.clear()
         steer = pure_pursuit(sol.pos, sol.heading, CENTERLINE)
         meas  = get_measurements(sol.pos, sol.heading)
@@ -202,6 +218,21 @@ def make_problem1():
 
         draw_track(ax)
 
+        gm_pt = sol._global_meas
+        assoc= np.atleast_1d(sol._assoc)
+
+        for i in range(min(len(gm_pt), len(assoc))):
+            # only consider measurements that got assigned
+            if assoc[i] >=0:
+                # compare associated cone position vs measurement
+                cone_pos = MAP_CONES[assoc[i]]
+                meas_pos = gm_pt[i]
+
+                # check if distance is within tolerance
+                if np.linalg.norm(cone_pos - meas_pos) <= 0.5:  # 0.5 m tolerance
+                    total_correct += 1
+        total_measurements+=len(gm_pt)
+    
         if len(sol._global_meas) > 0:
             for idx, gm in zip(sol._assoc, sol._global_meas):
                 mc = MAP_CONES[idx]
@@ -217,7 +248,14 @@ def make_problem1():
         ax.legend(loc="upper right", fontsize=8, framealpha=0.8)
         fig.tight_layout(rect=[0, 0, 1, 0.95])
 
-    ani = FuncAnimation(fig, update, frames=N_FRAMES, interval=100, repeat=True)
+        if frame == N_FRAMES -1 :
+            if total_measurements > 0:
+                accuracy_percent = 100 * total_correct/total_measurements
+                print(f"Data Association accuracy for lap: {accuracy_percent:.2f}%")
+            else:
+                print("No measurements")
+
+    ani = FuncAnimation(fig, update, frames=N_FRAMES, interval=100, repeat=False)
     return fig, ani
 
 # ── Main ──────────────────────────────────────────────────────────────────────
