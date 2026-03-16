@@ -13,6 +13,26 @@ You must implement two functions: plan() and control()
 # ─── PLANNER ──────────────────────────────────────────────────────────────────
 import numpy as np
 
+
+def densify(path, step=0.4):
+    new_path = []
+    for i in range(len(path)):
+        p1 = path[i]
+        p2 = path[(i+1)%len(path)]
+
+        dx = p2["x"] - p1["x"]
+        dy = p2["y"] - p1["y"]
+        dist = np.hypot(dx, dy)
+        n_points = max(int(dist / step), 1)
+
+        for j in range(n_points):
+            t = j / n_points
+            new_path.append({"x": p1["x"] + t*dx, "y": p1["y"] + t*dy})
+
+    new_path.append(path[-1])
+    return new_path
+
+
 def plan(cones: list[dict]) -> list[dict]:
     """
     Generate a path from the cone layout.
@@ -35,12 +55,24 @@ def plan(cones: list[dict]) -> list[dict]:
 
     # implement a planning algorithm to generate a path from the blue and yellow cones
 
+    blue = sorted(
+        [c for c in cones if c["side"]=="left"],
+        key=lambda c: c["index"]
+    )
 
+    yellow = sorted(
+        [c for c in cones if c["side"]=="right"],
+        key=lambda c: c["index"]
+    )
 
+    path = []
 
+    for b,y in zip(blue,yellow):
 
+        path.append({
+            "x": (b["x"] + y["x"]) / 2,
+            "y": (b["y"] + y["y"]) / 2
+        })
 
-
-
+    path = densify(path)
     return path
-
